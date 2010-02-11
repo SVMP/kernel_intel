@@ -316,7 +316,8 @@ static void hci_conn_auto_accept(unsigned long arg)
 		     &conn->dst);
 }
 
-struct hci_conn *hci_conn_add(struct hci_dev *hdev, int type, bdaddr_t *dst)
+struct hci_conn *hci_conn_add(struct hci_dev *hdev, int type,
+					__u16 pkt_type, bdaddr_t *dst)
 {
 	struct hci_conn *conn;
 
@@ -344,14 +345,22 @@ struct hci_conn *hci_conn_add(struct hci_dev *hdev, int type, bdaddr_t *dst)
 		conn->pkt_type = hdev->pkt_type & ACL_PTYPE_MASK;
 		break;
 	case SCO_LINK:
-		if (lmp_esco_capable(hdev))
-			conn->pkt_type = (hdev->esco_type & SCO_ESCO_MASK) |
-					(hdev->esco_type & EDR_ESCO_MASK);
-		else
-			conn->pkt_type = hdev->pkt_type & SCO_PTYPE_MASK;
-		break;
+		if (!pkt_type)
+			pkt_type = SCO_ESCO_MASK;
 	case ESCO_LINK:
-		conn->pkt_type = hdev->esco_type & ~EDR_ESCO_MASK;
+		if (!pkt_type)
+			pkt_type = ALL_ESCO_MASK;
+		if (lmp_esco_capable(hdev)) {
+			/* HCI Setup Synchronous Connection Command uses
+			   reverse logic on the EDR_ESCO_MASK bits */
+			conn->pkt_type = (pkt_type ^ EDR_ESCO_MASK) &
+					hdev->esco_type;
+		} else {
+			/* Legacy HCI Add Sco Connection Command uses a
+			   shifted bitmask */
+			conn->pkt_type = (pkt_type << 5) & hdev->pkt_type &
+					SCO_PTYPE_MASK;
+		}
 		break;
 	}
 
@@ -482,7 +491,7 @@ static struct hci_conn *hci_connect_le(struct hci_dev *hdev, bdaddr_t *dst,
 		if (le)
 			return ERR_PTR(-EBUSY);
 
-		le = hci_conn_add(hdev, LE_LINK, dst);
+		le = hci_conn_add(hdev, LE_LINK, 0, dst);
 		if (!le)
 			return ERR_PTR(-ENOMEM);
 
@@ -505,7 +514,7 @@ static struct hci_conn *hci_connect_acl(struct hci_dev *hdev, bdaddr_t *dst,
 
 	acl = hci_conn_hash_lookup_ba(hdev, ACL_LINK, dst);
 	if (!acl) {
-		acl = hci_conn_add(hdev, ACL_LINK, dst);
+		acl = hci_conn_add(hdev, ACL_LINK, 0, dst);
 		if (!acl)
 			return ERR_PTR(-ENOMEM);
 	}
@@ -523,7 +532,8 @@ static struct hci_conn *hci_connect_acl(struct hci_dev *hdev, bdaddr_t *dst,
 }
 
 static struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type,
-				bdaddr_t *dst, u8 sec_level, u8 auth_type)
+				__u16 pkt_type, bdaddr_t *dst,
+				u8 sec_level, u8 auth_type)
 {
 	struct hci_conn *acl;
 	struct hci_conn *sco;
@@ -534,7 +544,7 @@ static struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type,
 
 	sco = hci_conn_hash_lookup_ba(hdev, type, dst);
 	if (!sco) {
-		sco = hci_conn_add(hdev, type, dst);
+		sco = hci_conn_add(hdev, type, pkt_type, dst);
 		if (!sco) {
 			hci_conn_put(acl);
 			return ERR_PTR(-ENOMEM);
@@ -564,8 +574,9 @@ static struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type,
 }
 
 /* Create SCO, ACL or LE connection. */
-struct hci_conn *hci_connect(struct hci_dev *hdev, int type, bdaddr_t *dst,
-			     __u8 dst_type, __u8 sec_level, __u8 auth_type)
+struct hci_conn *hci_connect(struct hci_dev *hdev, int type,
+			     __u16 pkt_type, bdaddr_t *dst,
+			     __u8 dst_type,  __u8 sec_level, __u8 auth_type)
 {
 	BT_DBG("%s dst %s type 0x%x", hdev->name, batostr(dst), type);
 
@@ -576,7 +587,8 @@ struct hci_conn *hci_connect(struct hci_dev *hdev, int type, bdaddr_t *dst,
 		return hci_connect_acl(hdev, dst, sec_level, auth_type);
 	case SCO_LINK:
 	case ESCO_LINK:
-		return hci_connect_sco(hdev, type, dst, sec_level, auth_type);
+		return hci_connect_sco(hdev, type, pkt_type, dst, sec_level,
+				auth_type);
 	}
 
 	return ERR_PTR(-EINVAL);
