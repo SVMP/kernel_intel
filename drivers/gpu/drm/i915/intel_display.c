@@ -2069,8 +2069,11 @@ static int ironlake_update_plane(struct drm_crtc *crtc,
 			dspcntr |= DISPPLANE_32BPP_NO_ALPHA;
 		else if (fb->depth == 30)
 			dspcntr |= DISPPLANE_32BPP_30BIT_NO_ALPHA;
-		else
-			return -EINVAL;
+		else {
+			WARN(1, "bad bpp vs depth (%d vs %d), assuming 32bpp\n",
+			     fb->bits_per_pixel, fb->depth);
+			dspcntr |= DISPPLANE_32BPP_NO_ALPHA;
+		}
 		break;
 	default:
 		DRM_ERROR("Unknown color depth %d\n", fb->bits_per_pixel);
