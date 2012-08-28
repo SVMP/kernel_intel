@@ -15,4 +15,5 @@ obj-y += adc/
 obj-y += amplifiers/
 obj-y += common/
 obj-y += gyro/
+obj-y += light/
 obj-y += magnetometer/
