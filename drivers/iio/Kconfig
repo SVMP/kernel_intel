@@ -58,5 +58,6 @@ source "drivers/iio/accel/Kconfig"
 source "drivers/iio/adc/Kconfig"
 source "drivers/iio/amplifiers/Kconfig"
 source "drivers/iio/common/Kconfig"
+source "drivers/iio/gyro/Kconfig"
 
 endif # IIO

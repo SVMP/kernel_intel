@@ -14,3 +14,4 @@ obj-y += accel/
 obj-y += adc/
 obj-y += amplifiers/
 obj-y += common/
+obj-y += gyro/
