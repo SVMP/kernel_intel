@@ -25,6 +25,12 @@ config ANDROID_LOGGER
 	tristate "Android log driver"
 	default n
 
+config ANDROID_LOGGER_DUMPER
+	tristate "Android log kernel dumper"
+	help
+	 uses the Android logger dumping interface to dump the logger buffers
+	 to kernel console using printk's.
+
 config ANDROID_RAM_CONSOLE
 	bool "Android RAM buffer console"
 	depends on !S390 && !UML && HAVE_MEMBLOCK && PSTORE_RAM=y
