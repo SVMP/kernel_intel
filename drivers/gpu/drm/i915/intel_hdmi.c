@@ -760,7 +760,13 @@ intel_hdmi_detect(struct drm_connector *connector, bool force)
 		if (intel_hdmi->force_audio != HDMI_AUDIO_AUTO)
 			intel_hdmi->has_audio =
 				(intel_hdmi->force_audio == HDMI_AUDIO_ON);
+#ifdef CONFIG_ANDROID
+		switch_set_state(&intel_hdmi->hotplug_switch, 1);
+	} else
+		switch_set_state(&intel_hdmi->hotplug_switch, 0);
+#else
 	}
+#endif
 
 	return status;
 }
@@ -858,6 +864,10 @@ done:
 
 static void intel_hdmi_destroy(struct drm_connector *connector)
 {
+#ifdef CONFIG_ANDROID
+	struct intel_hdmi *intel_hdmi = intel_attached_hdmi(connector);
+	switch_dev_unregister(&intel_hdmi->hotplug_switch);
+#endif
 	drm_sysfs_connector_remove(connector);
 	drm_connector_cleanup(connector);
 	kfree(connector);
@@ -1011,6 +1021,11 @@ void intel_hdmi_init(struct drm_device *dev, int sdvox_reg)
 
 	intel_connector_attach_encoder(intel_connector, intel_encoder);
 	drm_sysfs_connector_add(connector);
+
+#ifdef CONFIG_ANDROID
+	intel_hdmi->hotplug_switch.name = "hdmi";
+	switch_dev_register(&intel_hdmi->hotplug_switch);
+#endif
 
 	/* For G4X desktop chip, PEG_BAND_GAP_DATA 3:0 must first be written
 	 * 0xd.  Failure to do so will result in spurious interrupts being

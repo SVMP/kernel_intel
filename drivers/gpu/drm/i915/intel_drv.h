@@ -26,6 +26,9 @@
 #define __INTEL_DRV_H__
 
 #include <linux/i2c.h>
+#ifdef CONFIG_ANDROID
+#include <linux/switch.h>
+#endif
 #include "i915_drm.h"
 #include "i915_drv.h"
 #include "drm_crtc.h"
@@ -305,6 +308,9 @@ struct intel_hdmi {
 	bool has_hdmi_sink;
 	bool has_audio;
 	enum hdmi_force_audio force_audio;
+#ifdef CONFIG_ANDROID
+	struct switch_dev hotplug_switch;
+#endif
 	void (*write_infoframe)(struct drm_encoder *encoder,
 				struct dip_infoframe *frame);
 	void (*set_infoframes)(struct drm_encoder *encoder,
