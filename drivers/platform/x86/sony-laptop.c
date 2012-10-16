@@ -1477,7 +1477,7 @@ static void sony_nc_function_resume(void)
 				&result);
 }
 
-static int sony_nc_resume(struct device *dev)
+static int sony_nc_resume(struct acpi_device *device)
 {
 	struct sony_nc_value *item;
 	acpi_handle handle;
@@ -1508,8 +1508,6 @@ static int sony_nc_resume(struct device *dev)
 
 	return 0;
 }
-
-static SIMPLE_DEV_PM_OPS(sony_nc_pm, NULL, sony_nc_resume);
 
 static void sony_nc_rfkill_cleanup(void)
 {
@@ -2772,9 +2770,9 @@ static struct acpi_driver sony_nc_driver = {
 	.ops = {
 		.add = sony_nc_add,
 		.remove = sony_nc_remove,
+		.resume = sony_nc_resume,
 		.notify = sony_nc_notify,
 		},
-	.drv.pm = &sony_nc_pm,
 };
 
 /*********** SPIC (SNY6001) Device ***********/
@@ -4287,21 +4285,18 @@ err_free_resources:
 	return result;
 }
 
-static int sony_pic_suspend(struct device *dev)
+static int sony_pic_suspend(struct acpi_device *device, pm_message_t state)
 {
-	if (sony_pic_disable(to_acpi_device(dev)))
+	if (sony_pic_disable(device))
 		return -ENXIO;
 	return 0;
 }
 
-static int sony_pic_resume(struct device *dev)
+static int sony_pic_resume(struct acpi_device *device)
 {
-	sony_pic_enable(to_acpi_device(dev),
-			spic_dev.cur_ioport, spic_dev.cur_irq);
+	sony_pic_enable(device, spic_dev.cur_ioport, spic_dev.cur_irq);
 	return 0;
 }
-
-static SIMPLE_DEV_PM_OPS(sony_pic_pm, sony_pic_suspend, sony_pic_resume);
 
 static const struct acpi_device_id sony_pic_device_ids[] = {
 	{SONY_PIC_HID, 0},
@@ -4316,8 +4311,9 @@ static struct acpi_driver sony_pic_driver = {
 	.ops = {
 		.add = sony_pic_add,
 		.remove = sony_pic_remove,
+		.suspend = sony_pic_suspend,
+		.resume = sony_pic_resume,
 		},
-	.drv.pm = &sony_pic_pm,
 };
 
 static struct dmi_system_id __initdata sonypi_dmi_table[] = {

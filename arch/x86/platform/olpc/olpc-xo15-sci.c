@@ -204,7 +204,7 @@ static int xo15_sci_remove(struct acpi_device *device, int type)
 	return 0;
 }
 
-static int xo15_sci_resume(struct device *dev)
+static int xo15_sci_resume(struct acpi_device *device)
 {
 	/* Enable all EC events */
 	olpc_ec_mask_write(EC_SCI_SRC_ALL);
@@ -215,8 +215,6 @@ static int xo15_sci_resume(struct device *dev)
 
 	return 0;
 }
-
-static SIMPLE_DEV_PM_OPS(xo15_sci_pm, NULL, xo15_sci_resume);
 
 static const struct acpi_device_id xo15_sci_device_ids[] = {
 	{"XO15EC", 0},
@@ -230,8 +228,8 @@ static struct acpi_driver xo15_sci_drv = {
 	.ops = {
 		.add = xo15_sci_add,
 		.remove = xo15_sci_remove,
+		.resume = xo15_sci_resume,
 	},
-	.drv.pm = &xo15_sci_pm,
 };
 
 static int __init xo15_sci_init(void)

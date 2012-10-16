@@ -34,7 +34,6 @@ struct cpuidle_driver;
 struct cpuidle_state_usage {
 	void		*driver_data;
 
-	unsigned long long	disable;
 	unsigned long long	usage;
 	unsigned long long	time; /* in US */
 };
@@ -47,7 +46,7 @@ struct cpuidle_state {
 	unsigned int	exit_latency; /* in US */
 	int		power_usage; /* in mW */
 	unsigned int	target_residency; /* in US */
-	bool		disabled; /* disabled on all CPUs */
+	unsigned int    disable;
 
 	int (*enter)	(struct cpuidle_device *dev,
 			struct cpuidle_driver *drv,
@@ -144,17 +143,13 @@ struct cpuidle_driver {
 extern void disable_cpuidle(void);
 extern int cpuidle_idle_call(void);
 extern int cpuidle_register_driver(struct cpuidle_driver *drv);
-extern struct cpuidle_driver *cpuidle_get_driver(void);
-extern struct cpuidle_driver *cpuidle_driver_ref(void);
-extern void cpuidle_driver_unref(void);
+struct cpuidle_driver *cpuidle_get_driver(void);
 extern void cpuidle_unregister_driver(struct cpuidle_driver *drv);
 extern int cpuidle_register_device(struct cpuidle_device *dev);
 extern void cpuidle_unregister_device(struct cpuidle_device *dev);
 
 extern void cpuidle_pause_and_lock(void);
 extern void cpuidle_resume_and_unlock(void);
-extern void cpuidle_pause(void);
-extern void cpuidle_resume(void);
 extern int cpuidle_enable_device(struct cpuidle_device *dev);
 extern void cpuidle_disable_device(struct cpuidle_device *dev);
 extern int cpuidle_wrap_enter(struct cpuidle_device *dev,
@@ -169,8 +164,6 @@ static inline int cpuidle_idle_call(void) { return -ENODEV; }
 static inline int cpuidle_register_driver(struct cpuidle_driver *drv)
 {return -ENODEV; }
 static inline struct cpuidle_driver *cpuidle_get_driver(void) {return NULL; }
-static inline struct cpuidle_driver *cpuidle_driver_ref(void) {return NULL; }
-static inline void cpuidle_driver_unref(void) {}
 static inline void cpuidle_unregister_driver(struct cpuidle_driver *drv) { }
 static inline int cpuidle_register_device(struct cpuidle_device *dev)
 {return -ENODEV; }
@@ -178,8 +171,6 @@ static inline void cpuidle_unregister_device(struct cpuidle_device *dev) { }
 
 static inline void cpuidle_pause_and_lock(void) { }
 static inline void cpuidle_resume_and_unlock(void) { }
-static inline void cpuidle_pause(void) { }
-static inline void cpuidle_resume(void) { }
 static inline int cpuidle_enable_device(struct cpuidle_device *dev)
 {return -ENODEV; }
 static inline void cpuidle_disable_device(struct cpuidle_device *dev) { }
@@ -226,7 +217,14 @@ struct cpuidle_governor {
 extern int cpuidle_register_governor(struct cpuidle_governor *gov);
 extern void cpuidle_unregister_governor(struct cpuidle_governor *gov);
 
+#ifdef CONFIG_INTEL_IDLE
+extern int intel_idle_cpu_init(int cpu);
 #else
+static inline int intel_idle_cpu_init(int cpu) { return -1; }
+#endif
+
+#else
+static inline int intel_idle_cpu_init(int cpu) { return -1; }
 
 static inline int cpuidle_register_governor(struct cpuidle_governor *gov)
 {return 0;}

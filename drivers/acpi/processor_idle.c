@@ -221,6 +221,10 @@ static void lapic_timer_state_broadcast(struct acpi_processor *pr,
 
 #endif
 
+/*
+ * Suspend / resume control
+ */
+static int acpi_idle_suspend;
 static u32 saved_bm_rld;
 
 static void acpi_idle_bm_rld_save(void)
@@ -237,15 +241,23 @@ static void acpi_idle_bm_rld_restore(void)
 		acpi_write_bit_register(ACPI_BITREG_BUS_MASTER_RLD, saved_bm_rld);
 }
 
-int acpi_processor_suspend(struct device *dev)
+int acpi_processor_suspend(struct acpi_device * device, pm_message_t state)
 {
+	if (acpi_idle_suspend == 1)
+		return 0;
+
 	acpi_idle_bm_rld_save();
+	acpi_idle_suspend = 1;
 	return 0;
 }
 
-int acpi_processor_resume(struct device *dev)
+int acpi_processor_resume(struct acpi_device * device)
 {
+	if (acpi_idle_suspend == 0)
+		return 0;
+
 	acpi_idle_bm_rld_restore();
+	acpi_idle_suspend = 0;
 	return 0;
 }
 
@@ -583,6 +595,7 @@ static void acpi_processor_power_verify_c3(struct acpi_processor *pr,
 	 */
 	cx->valid = 1;
 
+	cx->latency_ticks = cx->latency;
 	/*
 	 * On older chipsets, BM_RLD needs to be set
 	 * in order for Bus Master activity to wake the
@@ -615,6 +628,7 @@ static int acpi_processor_power_verify(struct acpi_processor *pr)
 			if (!cx->address)
 				break;
 			cx->valid = 1; 
+			cx->latency_ticks = cx->latency; /* Normalize latency */
 			break;
 
 		case ACPI_STATE_C3:
@@ -749,6 +763,11 @@ static int acpi_idle_enter_c1(struct cpuidle_device *dev,
 
 	local_irq_disable();
 
+	if (acpi_idle_suspend) {
+		local_irq_enable();
+		cpu_relax();
+		return -EBUSY;
+	}
 
 	lapic_timer_state_broadcast(pr, cx, 1);
 	kt1 = ktime_get_real();
@@ -760,6 +779,7 @@ static int acpi_idle_enter_c1(struct cpuidle_device *dev,
 	dev->last_residency = (int)idle_time;
 
 	local_irq_enable();
+	cx->usage++;
 	lapic_timer_state_broadcast(pr, cx, 0);
 
 	return index;
@@ -818,6 +838,11 @@ static int acpi_idle_enter_simple(struct cpuidle_device *dev,
 
 	local_irq_disable();
 
+	if (acpi_idle_suspend) {
+		local_irq_enable();
+		cpu_relax();
+		return -EBUSY;
+	}
 
 	if (cx->entry_method != ACPI_CSTATE_FFH) {
 		current_thread_info()->status &= ~TS_POLLING;
@@ -862,7 +887,10 @@ static int acpi_idle_enter_simple(struct cpuidle_device *dev,
 	if (cx->entry_method != ACPI_CSTATE_FFH)
 		current_thread_info()->status |= TS_POLLING;
 
+	cx->usage++;
+
 	lapic_timer_state_broadcast(pr, cx, 0);
+	cx->time += idle_time;
 	return index;
 }
 
@@ -900,7 +928,8 @@ static int acpi_idle_enter_bm(struct cpuidle_device *dev,
 						drv, drv->safe_state_index);
 		} else {
 			local_irq_disable();
-			acpi_safe_halt();
+			if (!acpi_idle_suspend)
+				acpi_safe_halt();
 			local_irq_enable();
 			return -EBUSY;
 		}
@@ -908,6 +937,11 @@ static int acpi_idle_enter_bm(struct cpuidle_device *dev,
 
 	local_irq_disable();
 
+	if (acpi_idle_suspend) {
+		local_irq_enable();
+		cpu_relax();
+		return -EBUSY;
+	}
 
 	if (cx->entry_method != ACPI_CSTATE_FFH) {
 		current_thread_info()->status &= ~TS_POLLING;
@@ -980,7 +1014,10 @@ static int acpi_idle_enter_bm(struct cpuidle_device *dev,
 	if (cx->entry_method != ACPI_CSTATE_FFH)
 		current_thread_info()->status |= TS_POLLING;
 
+	cx->usage++;
+
 	lapic_timer_state_broadcast(pr, cx, 0);
+	cx->time += idle_time;
 	return index;
 }
 

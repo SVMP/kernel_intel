@@ -62,18 +62,8 @@ static int exynos_target(struct cpufreq_policy *policy,
 		goto out;
 	}
 
-	/*
-	 * The policy max have been changed so that we cannot get proper
-	 * old_index with cpufreq_frequency_table_target(). Thus, ignore
-	 * policy and get the index from the raw freqeuncy table.
-	 */
-	for (old_index = 0;
-		freq_table[old_index].frequency != CPUFREQ_TABLE_END;
-		old_index++)
-		if (freq_table[old_index].frequency == freqs.old)
-			break;
-
-	if (freq_table[old_index].frequency == CPUFREQ_TABLE_END) {
+	if (cpufreq_frequency_table_target(policy, freq_table,
+					   freqs.old, relation, &old_index)) {
 		ret = -EINVAL;
 		goto out;
 	}

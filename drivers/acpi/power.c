@@ -60,15 +60,13 @@ ACPI_MODULE_NAME("power");
 
 static int acpi_power_add(struct acpi_device *device);
 static int acpi_power_remove(struct acpi_device *device, int type);
+static int acpi_power_resume(struct acpi_device *device);
 
 static const struct acpi_device_id power_device_ids[] = {
 	{ACPI_POWER_HID, 0},
 	{"", 0},
 };
 MODULE_DEVICE_TABLE(acpi, power_device_ids);
-
-static int acpi_power_resume(struct device *dev);
-static SIMPLE_DEV_PM_OPS(acpi_power_pm, NULL, acpi_power_resume);
 
 static struct acpi_driver acpi_power_driver = {
 	.name = "power",
@@ -77,8 +75,8 @@ static struct acpi_driver acpi_power_driver = {
 	.ops = {
 		.add = acpi_power_add,
 		.remove = acpi_power_remove,
+		.resume = acpi_power_resume,
 		},
-	.drv.pm = &acpi_power_pm,
 };
 
 /*
@@ -787,16 +785,14 @@ static int acpi_power_remove(struct acpi_device *device, int type)
 	return 0;
 }
 
-static int acpi_power_resume(struct device *dev)
+static int acpi_power_resume(struct acpi_device *device)
 {
 	int result = 0, state;
-	struct acpi_device *device;
 	struct acpi_power_resource *resource;
 
-	if (!dev)
+	if (!device)
 		return -EINVAL;
 
-	device = to_acpi_device(dev);
 	resource = acpi_driver_data(device);
 	if (!resource)
 		return -EINVAL;

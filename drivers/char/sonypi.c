@@ -1459,7 +1459,7 @@ static int __devexit sonypi_remove(struct platform_device *dev)
 #ifdef CONFIG_PM
 static int old_camera_power;
 
-static int sonypi_suspend(struct device *dev)
+static int sonypi_suspend(struct platform_device *dev, pm_message_t state)
 {
 	old_camera_power = sonypi_device.camera_power;
 	sonypi_disable();
@@ -1467,16 +1467,14 @@ static int sonypi_suspend(struct device *dev)
 	return 0;
 }
 
-static int sonypi_resume(struct device *dev)
+static int sonypi_resume(struct platform_device *dev)
 {
 	sonypi_enable(old_camera_power);
 	return 0;
 }
-
-static SIMPLE_DEV_PM_OPS(sonypi_pm, sonypi_suspend, sonypi_resume);
-#define SONYPI_PM	(&sonypi_pm)
 #else
-#define SONYPI_PM	NULL
+#define sonypi_suspend	NULL
+#define sonypi_resume	NULL
 #endif
 
 static void sonypi_shutdown(struct platform_device *dev)
@@ -1488,11 +1486,12 @@ static struct platform_driver sonypi_driver = {
 	.driver		= {
 		.name	= "sonypi",
 		.owner	= THIS_MODULE,
-		.pm	= SONYPI_PM,
 	},
 	.probe		= sonypi_probe,
 	.remove		= __devexit_p(sonypi_remove),
 	.shutdown	= sonypi_shutdown,
+	.suspend	= sonypi_suspend,
+	.resume		= sonypi_resume,
 };
 
 static struct platform_device *sonypi_platform_device;

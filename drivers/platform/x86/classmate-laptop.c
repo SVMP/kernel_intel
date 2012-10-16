@@ -752,17 +752,14 @@ static int cmpc_tablet_remove(struct acpi_device *acpi, int type)
 	return cmpc_remove_acpi_notify_device(acpi);
 }
 
-static int cmpc_tablet_resume(struct device *dev)
+static int cmpc_tablet_resume(struct acpi_device *acpi)
 {
-	struct input_dev *inputdev = dev_get_drvdata(dev);
-
+	struct input_dev *inputdev = dev_get_drvdata(&acpi->dev);
 	unsigned long long val = 0;
-	if (ACPI_SUCCESS(cmpc_get_tablet(to_acpi_device(dev)->handle, &val)))
+	if (ACPI_SUCCESS(cmpc_get_tablet(acpi->handle, &val)))
 		input_report_switch(inputdev, SW_TABLET_MODE, !val);
 	return 0;
 }
-
-static SIMPLE_DEV_PM_OPS(cmpc_tablet_pm, NULL, cmpc_tablet_resume);
 
 static const struct acpi_device_id cmpc_tablet_device_ids[] = {
 	{CMPC_TABLET_HID, 0},
@@ -777,9 +774,9 @@ static struct acpi_driver cmpc_tablet_acpi_driver = {
 	.ops = {
 		.add = cmpc_tablet_add,
 		.remove = cmpc_tablet_remove,
+		.resume = cmpc_tablet_resume,
 		.notify = cmpc_tablet_handler,
-	},
-	.drv.pm = &cmpc_tablet_pm,
+	}
 };
 
 

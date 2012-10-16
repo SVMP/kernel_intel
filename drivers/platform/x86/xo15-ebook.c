@@ -77,12 +77,10 @@ static void ebook_switch_notify(struct acpi_device *device, u32 event)
 	}
 }
 
-static int ebook_switch_resume(struct device *dev)
+static int ebook_switch_resume(struct acpi_device *device)
 {
-	return ebook_send_state(to_acpi_device(dev));
+	return ebook_send_state(device);
 }
-
-static SIMPLE_DEV_PM_OPS(ebook_switch_pm, NULL, ebook_switch_resume);
 
 static int ebook_switch_add(struct acpi_device *device)
 {
@@ -163,10 +161,10 @@ static struct acpi_driver xo15_ebook_driver = {
 	.ids = ebook_device_ids,
 	.ops = {
 		.add = ebook_switch_add,
+		.resume = ebook_switch_resume,
 		.remove = ebook_switch_remove,
 		.notify = ebook_switch_notify,
 	},
-	.drv.pm = &ebook_switch_pm,
 };
 
 static int __init xo15_ebook_init(void)

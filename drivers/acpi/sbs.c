@@ -988,17 +988,15 @@ static void acpi_sbs_rmdirs(void)
 #endif
 }
 
-static int acpi_sbs_resume(struct device *dev)
+static int acpi_sbs_resume(struct acpi_device *device)
 {
 	struct acpi_sbs *sbs;
-	if (!dev)
+	if (!device)
 		return -EINVAL;
-	sbs = to_acpi_device(dev)->driver_data;
+	sbs = device->driver_data;
 	acpi_sbs_callback(sbs);
 	return 0;
 }
-
-static SIMPLE_DEV_PM_OPS(acpi_sbs_pm, NULL, acpi_sbs_resume);
 
 static struct acpi_driver acpi_sbs_driver = {
 	.name = "sbs",
@@ -1007,8 +1005,8 @@ static struct acpi_driver acpi_sbs_driver = {
 	.ops = {
 		.add = acpi_sbs_add,
 		.remove = acpi_sbs_remove,
+		.resume = acpi_sbs_resume,
 		},
-	.drv.pm = &acpi_sbs_pm,
 };
 
 static int __init acpi_sbs_init(void)
