@@ -350,7 +350,6 @@ static void cmpc_accel_idev_init_v4(struct input_dev *inputdev)
 	inputdev->close = cmpc_accel_close_v4;
 }
 
-#ifdef CONFIG_PM_SLEEP
 static int cmpc_accel_suspend_v4(struct device *dev)
 {
 	struct input_dev *inputdev;
@@ -385,7 +384,6 @@ static int cmpc_accel_resume_v4(struct device *dev)
 
 	return 0;
 }
-#endif
 
 static int cmpc_accel_add_v4(struct acpi_device *acpi)
 {
@@ -758,7 +756,6 @@ static int cmpc_tablet_remove(struct acpi_device *acpi, int type)
 	return cmpc_remove_acpi_notify_device(acpi);
 }
 
-#ifdef CONFIG_PM_SLEEP
 static int cmpc_tablet_resume(struct device *dev)
 {
 	struct input_dev *inputdev = dev_get_drvdata(dev);
@@ -770,7 +767,6 @@ static int cmpc_tablet_resume(struct device *dev)
 	}
 	return 0;
 }
-#endif
 
 static SIMPLE_DEV_PM_OPS(cmpc_tablet_pm, NULL, cmpc_tablet_resume);
 

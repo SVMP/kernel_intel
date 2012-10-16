@@ -140,10 +140,7 @@ MODULE_PARM_DESC(kbd_backlight_timeout,
 		 "1 for 30 seconds, 2 for 60 seconds and 3 to disable timeout "
 		 "(default: 0)");
 
-#ifdef CONFIG_PM_SLEEP
 static void sony_nc_kbd_backlight_resume(void);
-static void sony_nc_thermal_resume(void);
-#endif
 static int sony_nc_kbd_backlight_setup(struct platform_device *pd,
 		unsigned int handle);
 static void sony_nc_kbd_backlight_cleanup(struct platform_device *pd);
@@ -154,6 +151,7 @@ static void sony_nc_battery_care_cleanup(struct platform_device *pd);
 
 static int sony_nc_thermal_setup(struct platform_device *pd);
 static void sony_nc_thermal_cleanup(struct platform_device *pd);
+static void sony_nc_thermal_resume(void);
 
 static int sony_nc_lid_resume_setup(struct platform_device *pd);
 static void sony_nc_lid_resume_cleanup(struct platform_device *pd);
@@ -1433,7 +1431,6 @@ static void sony_nc_function_cleanup(struct platform_device *pd)
 	sony_nc_handles_cleanup(pd);
 }
 
-#ifdef CONFIG_PM_SLEEP
 static void sony_nc_function_resume(void)
 {
 	unsigned int i, result, bitmask, arg;
@@ -1511,7 +1508,6 @@ static int sony_nc_resume(struct device *dev)
 
 	return 0;
 }
-#endif
 
 static SIMPLE_DEV_PM_OPS(sony_nc_pm, NULL, sony_nc_resume);
 
@@ -1876,7 +1872,6 @@ static void sony_nc_kbd_backlight_cleanup(struct platform_device *pd)
 	}
 }
 
-#ifdef CONFIG_PM_SLEEP
 static void sony_nc_kbd_backlight_resume(void)
 {
 	int ignore = 0;
@@ -1893,7 +1888,6 @@ static void sony_nc_kbd_backlight_resume(void)
 				(kbdbl_ctl->base + 0x200) |
 				(kbdbl_ctl->timeout << 0x10), &ignore);
 }
-#endif
 
 struct battery_care_control {
 	struct device_attribute attrs[2];
@@ -2216,7 +2210,6 @@ static void sony_nc_thermal_cleanup(struct platform_device *pd)
 	}
 }
 
-#ifdef CONFIG_PM_SLEEP
 static void sony_nc_thermal_resume(void)
 {
 	unsigned int status = sony_nc_thermal_mode_get();
@@ -2224,7 +2217,6 @@ static void sony_nc_thermal_resume(void)
 	if (status != th_handle->mode)
 		sony_nc_thermal_mode_set(th_handle->mode);
 }
-#endif
 
 /* resume on LID open */
 struct snc_lid_resume_control {
@@ -4295,7 +4287,6 @@ err_free_resources:
 	return result;
 }
 
-#ifdef CONFIG_PM_SLEEP
 static int sony_pic_suspend(struct device *dev)
 {
 	if (sony_pic_disable(to_acpi_device(dev)))
@@ -4309,7 +4300,6 @@ static int sony_pic_resume(struct device *dev)
 			spic_dev.cur_ioport, spic_dev.cur_irq);
 	return 0;
 }
-#endif
 
 static SIMPLE_DEV_PM_OPS(sony_pic_pm, sony_pic_suspend, sony_pic_resume);
 
