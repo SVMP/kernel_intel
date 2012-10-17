@@ -221,8 +221,15 @@ static int part_uevent(struct device *dev, struct kobj_uevent_env *env)
 	struct hd_struct *part = dev_to_part(dev);
 
 	add_uevent_var(env, "PARTN=%u", part->partno);
-	if (part->info && part->info->volname[0])
-		add_uevent_var(env, "PARTNAME=%s", part->info->volname);
+	if (part->info) {
+		if (part->info->volname[0])
+			add_uevent_var(env, "PARTNAME=%s", part->info->volname);
+		/* The time_hi_and_version field shouldn't be zero if
+		 * this is a valid UUID */
+		if (part->info->uuid[6] | part->info->uuid[7])
+			add_uevent_var(env, "UUID=%pUl", part->info->uuid);
+	}
+
 	return 0;
 }
 
