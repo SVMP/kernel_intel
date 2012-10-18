@@ -1103,12 +1103,13 @@ void iwl_drv_stop(struct iwl_drv *drv)
 /* shared module parameters */
 struct iwl_mod_params iwlwifi_mod_params = {
 	.restart_fw = 1,
-	.plcp_check = true,
+	.plcp_check = false,
 	.bt_coex_active = true,
 	.power_level = IWL_POWER_INDEX_1,
 	.bt_ch_announce = true,
 	.auto_agg = true,
 	.wd_disable = true,
+	.disable_11n = 1,
 	/* the rest are 0 by default */
 };
 EXPORT_SYMBOL_GPL(iwlwifi_mod_params);
