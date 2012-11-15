@@ -630,6 +630,8 @@ static void sensor_hub_remove(struct hid_device *hdev)
 }
 
 static const struct hid_device_id sensor_hub_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_FREESCALE,
+			USB_DEVICE_ID_FREESCALE_SENSOR_HUB_0065) },
 	{ HID_USB_DEVICE(USB_VENDOR_ID_INTEL_8086,
 			USB_DEVICE_ID_SENSOR_HUB_1020) },
 	{ HID_USB_DEVICE(USB_VENDOR_ID_INTEL_8087,
