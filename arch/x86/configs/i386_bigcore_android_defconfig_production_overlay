@@ -42,9 +42,6 @@ CONFIG_ANDROID_RAM_CONSOLE=n
 # Production builds don't want penguins
 CONFIG_LOGO=n
 
-# Reject modules that aren't signed instead of just tainting the kernel
-CONFIG_MODULE_SIG_FORCE=y
-
 ##############################################################################
 # Other options that were tested, but did not significantly affect results   #
 ##############################################################################
