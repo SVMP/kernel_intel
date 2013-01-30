@@ -71,7 +71,8 @@ static size_t efi_char16_bufsz(char *str)
 
 /*
  * Set EFI variable to specify next boot target for EFI bootloader. Meant to be
- * called as a reboot notifier.
+ * called as a reboot notifier. DO NOT call this function without guaranteeing
+ * efi_enabled == true; it will crash.
  */
 static int efibc_reboot_notifier_call(
 		struct notifier_block *notifier,
@@ -146,6 +147,9 @@ static struct notifier_block efibc_reboot_notifier = {
 
 static int __init efibc_init(void)
 {
+	if (!efi_enabled)
+		return 0;
+
 	if (register_reboot_notifier(&efibc_reboot_notifier)) {
 		pr_err("efibc: unable to register reboot notifier\n");
 		return -1;
