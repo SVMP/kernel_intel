@@ -86,3 +86,5 @@ CONFIG_LOGO=n
 # No significant difference from simply disabling CONFIG_SLUB_DEBUG_ON
 # CONFIG_SLUB_DEBUG=n
 
+CONFIG_CIFS=n
+CONFIG_CIFS_WEAK_PW_HASH=n
